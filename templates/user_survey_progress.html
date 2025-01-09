@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+    <h1>Содержимое таблицы user_survey_progress</h1>
+   <tbody>
+    {% for survey in surveys %}
+    <tr>
+        <td>{{ survey.user_id }}</td>
+        <td>{{ survey.survey_name }}</td>
+        <td>{{ survey.current_index }}</td>
+        <td>
+            <ul>
+                {% for answer in survey.answers %}
+                    <li>{{ answer.question }}: {{ answer.answer }}</li>
+                {% endfor %}
+            </ul>
+        </td>
+        <td>{{ survey.created_at }}</td>
+        <td>{{ survey.questions }}</td>
+        <td>
+            <form method="POST" action="{{ url_for('delete_survey_progress', user_id=survey.user_id) }}">
+                <button type="submit" class="btn btn-danger">Удалить</button>
+            </form>
+        </td>
+    </tr>
+    {% endfor %}
+</tbody>
+ 
+{% endblock %}

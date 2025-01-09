@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="mb-4">Список кнопок</h1>
+<a href="/admin.wsgi/add" class="btn btn-primary mb-3">Добавить новую кнопку</a>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Вопрос</th>
+            <th>Ответ</th>
+            <th>Родительский ID</th>
+            <th>Тип</th>
+            <th>Доп. данные</th>
+            <th>Медиа</th>
+            <th>Действия</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for button in buttons %}
+        <tr>
+            <td>{{ button[0] }}</td>
+            <td>{{ button[1] }}</td>
+            <td>{{ button[2] }}</td>
+            <td>{{ button[3] }}</td>
+            <td>{{ button[4] }}</td>
+            <td>{{ button[5] }}</td>
+            <td>{{ button[6] }}</td>
+            <td>
+                <a href="/admin.wsgi/edit/{{ button[0] }}" class="btn btn-sm btn-warning">Редактировать</a>
+                <a href="/admin.wsgi/delete/{{ button[0] }}" class="btn btn-sm btn-danger">Удалить</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<nav aria-label="Pagination">
+    <ul class="pagination justify-content-center">
+        <li class="page-item {% if current_page == 1 %}disabled{% endif %}">
+            <a class="page-link" href="?page={{ current_page - 1 }}" aria-label="Previous">
+                <span aria-hidden="true">&laquo;</span>
+            </a>
+        </li>
+        {% for i in range(1, total_pages + 1) %}
+        <li class="page-item {% if current_page == i %}active{% endif %}">
+            <a class="page-link" href="?page={{ i }}">{{ i }}</a>
+        </li>
+        {% endfor %}
+        <li class="page-item {% if current_page == total_pages %}disabled{% endif %}">
+            <a class="page-link" href="?page={{ current_page + 1 }}" aria-label="Next">
+                <span aria-hidden="true">&raquo;</span>
+            </a>
+        </li>
+    </ul>
+</nav>
+{% endblock %}

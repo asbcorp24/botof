@@ -1,0 +1,20 @@
+Options +ExecCGI
+AddHandler wsgi-script .wsgi
+RewriteEngine On
+
+
+
+
+# Перенаправление запросов к /vk
+RewriteCond %{REQUEST_URI} ^/vk
+RewriteRule ^vk(/.*)?$ /vk.wsgi [QSA,PT,L]
+
+# Перенаправление запросов к /admin
+RewriteCond %{REQUEST_URI} ^/admin
+RewriteRule ^admin(/.*)?$ /admin.wsgi [QSA,PT,L]
+
+# Обработка всех остальных запросов через index.wsgi
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ /admin.wsgi [QSA,PT,L]
+

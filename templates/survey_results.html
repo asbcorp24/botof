@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="mb-4">Результаты анкет</h1>
+
+<!-- Форма фильтрации -->
+<form method="get" class="row g-3 mb-4">
+    <div class="col-md-4">
+        <label for="survey_name" class="form-label">Название анкеты</label>
+        <select id="survey_name" name="survey_name" class="form-select">
+            <option value="">Все</option>
+            {% for name in survey_names %}
+            <option value="{{ name }}" {% if name == request.args.get('survey_name', '') %}selected{% endif %}>{{ name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-3">
+        <label for="start_date" class="form-label">Дата начала</label>
+        <input type="date" id="start_date" name="start_date" class="form-control" value="{{ request.args.get('start_date', '') }}">
+    </div>
+    <div class="col-md-3">
+        <label for="end_date" class="form-label">Дата окончания</label>
+        <input type="date" id="end_date" name="end_date" class="form-control" value="{{ request.args.get('end_date', '') }}">
+    </div>
+    <div class="col-md-2 d-flex align-items-end">
+        <button type="submit" class="btn btn-primary">Фильтровать</button>
+    </div>
+</form>
+
+<!-- Таблица с результатами -->
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Пользователь</th>
+            <th>Вопросы и ответы</th>
+            <th>Название анкеты</th>
+            <th>Дата</th>
+            <th>Файл</th>
+            <th>Действия</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for result in results %}
+        <tr>
+            <td>{{ result[0] }}</td>
+            <td>{{ result[1] }}</td>
+            <td>
+                <ul>
+                    {% for qa in result[2] %}
+                    <li>
+                        <strong>{{ qa.question }}</strong>:
+                        {% if qa.answer.endswith(".jpg") or qa.answer.endswith(".jpeg") or qa.answer.endswith(".png") or qa.answer.endswith(".gif") %}
+                        <img src="uploads/user/{{ qa.answer }}" alt="Фото" style="max-width: 100%;">
+                        {% elif qa.answer.endswith(".pdf") %}
+                        <a href="uploads/user/{{ qa.answer }}" target="_blank">Скачать документ</a>
+                        {% else %}
+                        {{ qa.answer }}
+                        {% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+            </td>
+            <td>{{ result[3] }}</td>
+            <td>{{ result[4] }}</td>
+            <td>
+                {% if result[5] %}
+                <a href="{{ result[5] }}" class="btn btn-sm btn-secondary">Скачать</a>
+                {% else %}
+                Нет
+                {% endif %}
+            </td>
+            <td>
+                <form method="post" action="{{ url_for('delete_result', result_id=result[0]) }}" style="display:inline;">
+                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Вы уверены, что хотите удалить эту запись?');">Удалить</button>
+                </form>
+                 <button type="button" class="btn btn-sm btn-primary" onclick="printRow(this)">Печать</button>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!-- Навигация по страницам -->
+<nav aria-label="Pagination">
+    <ul class="pagination">
+        <li class="page-item {% if current_page <= 1 %}disabled{% endif %}">
+            <a class="page-link" href="?page={{ current_page - 1 }}{% if survey_name %}&survey_name={{ survey_name }}{% endif %}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}">Предыдущая</a>
+        </li>
+        {% for page in range(1, total_pages + 1) %}
+        <li class="page-item {% if page == current_page %}active{% endif %}">
+            <a class="page-link" href="?page={{ page }}{% if survey_name %}&survey_name={{ survey_name }}{% endif %}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}">{{ page }}</a>
+        </li>
+        {% endfor %}
+        <li class="page-item {% if current_page >= total_pages %}disabled{% endif %}">
+            <a class="page-link" href="?page={{ current_page + 1 }}{% if survey_name %}&survey_name={{ survey_name }}{% endif %}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}">Следующая</a>
+        </li>
+    </ul>
+</nav>
+
+<script>
+    function printRow(button) {
+        // Находим строку, в которой находится кнопка
+        const row = button.closest('tr');
+        // Получаем содержимое второго столбца
+        const userData = row.cells[1].textContent // Пользователь
+        const qaData = row.cells[2].innerHTML.trim();   // Вопросы и ответы
+
+        // Создаём окно для печати
+        const printWindow = window.open('', '_blank', 'width=600,height=400');
+        printWindow.document.write('<html><head><title>Печать</title></head><body>');
+        printWindow.document.write('<h1>Результаты записи</h1>');
+        printWindow.document.write('<p><strong>Пользователь:</strong> ' + userData + '</p>');
+        printWindow.document.write('<p><strong>Вопросы и ответы:</strong><br>' + qaData + '</p>');
+        printWindow.document.write('</body></html>');
+        printWindow.document.close();
+        printWindow.print();
+    }
+</script>
+{% endblock %}

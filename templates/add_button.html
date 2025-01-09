@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="mb-4 text-center">Добавить новую кнопку</h1>
+<div class="container">
+    <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+        <div class="mb-3">
+            <label for="question" class="form-label">Вопрос:</label>
+            <input type="text" class="form-control" id="question" name="question" required>
+            <div class="invalid-feedback">
+                Пожалуйста, введите вопрос.
+            </div>
+        </div>
+        <div class="mb-3">
+            <label for="response" class="form-label">Ответ:</label>
+            <textarea class="form-control" id="response" name="response" required></textarea>
+            <div class="invalid-feedback">
+                Пожалуйста, введите ответ.
+            </div>
+        </div>
+        <div class="mb-3">
+            <label for="parent_id" class="form-label">Родительский ID:</label>
+            <select class="form-select" id="parent_id" name="parent_id">
+                <option value="0">Главное меню</option>
+                {% for button in buttons %}
+                <option value="{{ button[0] }}">{{ button[1] }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="mb-3">
+    <label for="can_repeat" class="form-label">Можно ли проходить анкету несколько раз?</label>
+    <select class="form-select" id="can_repeat" name="can_repeat">
+        <option value="1" selected>Да</option>
+        <option value="0">Нет</option>
+    </select>
+</div>
+        <div class="mb-3">
+            <label for="request_type" class="form-label">Тип запроса:</label>
+            <select class="form-select" id="request_type" name="request_type">
+                <option value="0">Стандартный</option>
+                <option value="1">Анкета</option>
+            </select>
+        </div>
+        <div class="mb-3">
+            <label for="dop" class="form-label">Дополнительные данные (JSON):</label>
+            <textarea class="form-control" id="dop" name="dop"></textarea>
+            <div class="form-text">
+                Введите данные в формате JSON, если это необходимо.
+            </div>
+        </div>
+        <div id="json-builder" class="mb-3">
+            <h5>Создание JSON массива</h5>
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <input type="text" id="element-text" class="form-control" placeholder="Текст вопроса">
+                </div>
+                <div class="col-md-4">
+                    <select id="element-type" class="form-select">
+                        <option value="1">Текст</option>
+                        <option value="2">Дата</option>
+                        <option value="3">Число</option>
+                        <option value="4">Изображение</option>
+                        <option value="5">PDF</option>
+                        <option value="6">Координаты</option>
+                        <option value="7">Cписок</option>
+                        
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <input type="text" id="element-sp" class="form-control" placeholder="Список через запятую">
+                </div>
+            </div>
+            <button type="button" id="add-element" class="btn btn-primary mt-3">Добавить элемент</button>
+            <ul id="json-preview" class="mt-3 list-group">
+                <!-- Предпросмотр JSON элементов -->
+            </ul>
+        </div>
+        <div class="mb-3">
+            <label for="file" class="form-label">Загрузить файл:</label>
+            <input type="file" class="form-control" id="file" name="file">
+            <div class="form-text">
+                Вы можете загрузить файл (например, изображение или PDF).
+            </div>
+        </div>
+        <button type="submit" class="btn btn-success w-100">Сохранить</button>
+    </form>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    // Включение валидации Bootstrap
+    (function () {
+        'use strict'
+        const forms = document.querySelectorAll('.needs-validation')
+        Array.from(forms).forEach(function (form) {
+            form.addEventListener('submit', function (event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault()
+                    event.stopPropagation()
+                }
+                form.classList.add('was-validated')
+            }, false)
+        })
+    })()
+
+    // JSON Builder logic
+    $(document).ready(function () {
+        const $dop = $('#dop');
+        const $jsonPreview = $('#json-preview');
+        let jsonArray = [];
+
+        function refreshPreview() {
+            $jsonPreview.empty();
+            jsonArray.forEach((element, index) => {
+                const listItem = `
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    ${element.text} (Тип: ${element.answer_type})
+                    <div>
+                        <button class="btn btn-sm btn-warning edit-element" data-index="${index}">Редактировать</button>
+                        <button class="btn btn-sm btn-danger delete-element" data-index="${index}">Удалить</button>
+                    </div>
+                </li>`;
+                $jsonPreview.append(listItem);
+            });
+            $dop.val(JSON.stringify(jsonArray, null, 2));
+        }
+
+        $('#add-element').click(function () {
+            const text = $('#element-text').val().trim();
+            const answerType = parseInt($('#element-type').val(), 10);
+               const answersp = $('#element-sp').val().trim();
+
+            if (!text) {
+                alert('Введите текст вопроса.');
+                return;
+            }
+
+            const newElement = { text: text, answer_type: answerType,sp:answersp };
+            jsonArray.push(newElement);
+            refreshPreview();
+
+            // Очистить поля ввода
+            $('#element-text').val('');
+            $('#element-type').val('1');
+              $('#element-sp').val('');
+        });
+
+        $jsonPreview.on('click', '.delete-element', function () {
+            const index = $(this).data('index');
+            jsonArray.splice(index, 1);
+            refreshPreview();
+        });
+
+        $jsonPreview.on('click', '.edit-element', function () {
+            const index = $(this).data('index');
+            const element = jsonArray[index];
+
+            $('#element-text').val(element.text);
+            $('#element-type').val(element.answer_type);
+
+            jsonArray.splice(index, 1);
+            refreshPreview();
+        });
+    });
+</script>
+{% endblock %}
